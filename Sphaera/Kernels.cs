@@ -8,6 +8,7 @@ namespace Sphaera;
 public static class Kernels
 {
     internal const float Epsilon = 0.00001f;
+    internal const float G = 0.2f;
     
     internal static float GaussianContribution(float dist, float mass) => mass * XMath.Exp(-(dist * dist));
     internal static float SoftenedInverseContribution(float dist, float mass) => mass / (dist + Epsilon);
@@ -156,13 +157,13 @@ public static class Kernels
             var r = KernelProgramming.Vector3Get(positions, i);
             var v = KernelProgramming.Vector3Get(velocities, i);
             var prevR = KernelProgramming.Vector3Get(prevPositions, i);
-            var zeros = (0, 0, 0);
-
-            var a = Acceleration(gradAlpha, hessian, r, v, zeros, size, spacing);
-            var (rNext, vNext) = Verlet(r, prevR, v, a, dt);
             
-            KernelProgramming.Vector3Set(resultPositions, i, rNext);
-            KernelProgramming.Vector3Set(resultVelocities, i, vNext);
+            var gridIndex = GetIndex(r, size, spacing);
+            var grad = KernelProgramming.Vector3Get(gradAlpha, gridIndex);
+            var f = KernelProgramming.Vector3Multiply(grad, G);
+
+            var a = Acceleration(gradAlpha, hessian, r, v, f, size, spacing);
+            Verlet(resultPositions, resultVelocities, r, prevR, a, dt, i);
         });
     
     #endregion
@@ -211,12 +212,13 @@ public static class Kernels
         return 1 / XMath.Sqrt(1 + dot * dot);
     }
     
-    internal static ((float x, float y, float z) r, (float x, float y, float z) v) Verlet(
+    internal static void Verlet(
+        ArrayView1D<float, Stride1D.Dense> positions,
+        ArrayView1D<float, Stride1D.Dense> velocities,
         (float x, float y, float z) r,
         (float x, float y, float z) prevR,
-        (float x, float y, float z) v,
         (float x, float y, float z) a,
-        float dt)
+        float dt, int i)
     {
         // r_{n+1} = 2r - r_{n-1} + a dt^2
         // v_{n+1} = (r_{n+1} - r) / 2dt
@@ -224,7 +226,9 @@ public static class Kernels
         var adt2 = KernelProgramming.Vector3Multiply(a, dt * dt);
         var rNext = KernelProgramming.Vector3Add(diff, adt2);
         var vNext = KernelProgramming.Vector3Divide(KernelProgramming.Vector3Subtract(rNext, r), dt * 2);
-        return (rNext, vNext);
+        
+        KernelProgramming.Vector3Set(positions, i, rNext);
+        KernelProgramming.Vector3Set(velocities, i, vNext);
     }
 
     internal static (float x, float y, float z) Acceleration(

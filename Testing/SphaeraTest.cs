@@ -9,7 +9,7 @@ public static class SphaeraTest
     {
         AcceleratorIndex = Compute.RequestAccelerator(),
         DeltaTime = 0.01f,
-        GridSize = 20,
+        GridSize = 64,
         GridSpacing = 0.1f,
         TotalSteps = 1000,
         SaveVelocities = true,
@@ -18,8 +18,8 @@ public static class SphaeraTest
 
     public static List<SphaeraContributor> TwoBodyContributors =>
     [
-        new([0, 0, 0], [0, 0, 0], 10),
-        new([1, 0, 0], [0, 2, 0], 1)
+        new([3, 3, 3], [0, 0, 0], 10),
+        new([4, 3, 3], [0, 0.5f, 0], 1)
     ];
     
     public static void TestTwoBody()
