@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Jewels.Lazulite" Version="1.7.7-alpha" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Celestite\Celestite.csproj" />
+    </ItemGroup>
+
+</Project>
