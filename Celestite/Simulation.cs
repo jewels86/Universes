@@ -3,7 +3,7 @@ using ScottPlot;
 
 namespace Celestite;
 
-public abstract class Simulation<TConfiguration, TContributor>(TConfiguration configuration, List<TContributor> contributors) : IUniverse
+public abstract class Simulation<TConfiguration, TContributor>(TConfiguration configuration, List<TContributor> contributors) : ISimulation
     where TConfiguration : ISimulationConfiguration
     where TContributor : IContributor
 {
@@ -36,7 +36,8 @@ public abstract class Simulation<TConfiguration, TContributor>(TConfiguration co
             var start = plot.Add.Scatter(xPositions[0], yPositions[0]);
             start.MarkerSize = 20;
             
-            plot.Add.ScatterLine(xPositions, yPositions);
+            var scatter = plot.Add.Scatter(xPositions, yPositions);
+            scatter.Color = start.Color;
         }
         
         plot.Axes.AutoScale();
@@ -44,7 +45,7 @@ public abstract class Simulation<TConfiguration, TContributor>(TConfiguration co
     }
 }
 
-public interface IUniverse : IDisposable
+public interface ISimulation : IDisposable
 {
     public void Step();
     public List<IContributor> GetContributors();

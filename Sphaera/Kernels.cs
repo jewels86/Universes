@@ -157,10 +157,7 @@ public static class Kernels
             var r = KernelProgramming.Vector3Get(positions, i);
             var v = KernelProgramming.Vector3Get(velocities, i);
             var prevR = KernelProgramming.Vector3Get(prevPositions, i);
-            
-            var gridIndex = GetIndex(r, size, spacing);
-            var grad = KernelProgramming.Vector3Get(gradAlpha, gridIndex);
-            var f = KernelProgramming.Vector3Multiply(grad, G);
+            var f = Deflection(gradAlpha, v, r, size, spacing);
 
             var a = Acceleration(gradAlpha, hessian, r, v, f, size, spacing);
             Verlet(resultPositions, resultVelocities, r, prevR, a, dt, i);
@@ -229,6 +226,25 @@ public static class Kernels
         
         KernelProgramming.Vector3Set(positions, i, rNext);
         KernelProgramming.Vector3Set(velocities, i, vNext);
+    }
+
+    internal static (float x, float y, float z) Deflection(
+        ArrayView1D<float, Stride1D.Dense> gradAlpha,
+        (float x, float y, float z) v,
+        (float x, float y, float z) r, int size, float spacing)
+    {
+        // a_deflection = grad alpha - (grad alpha dot v hat) v hat
+        var vMag = XMath.Sqrt(KernelProgramming.Vector3Magnitude2(v));
+        var vHat = KernelProgramming.Vector3Divide(v, vMag);
+        
+        int i = GetIndex(r, size, spacing);
+        if (i < 0 || vMag < Epsilon) return (0, 0, 0);
+        var grad = KernelProgramming.Vector3Get(gradAlpha, i);
+        
+        var dot = grad.x * vHat.x + grad.y * vHat.y + grad.z * vHat.z;
+        var result =  KernelProgramming.Vector3Subtract(grad, KernelProgramming.Vector3Multiply(vHat, dot));
+        
+        return result;
     }
 
     internal static (float x, float y, float z) Acceleration(
